@@ -5,7 +5,7 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
 import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
 import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
-import com.google.mlkit.vision.text.latin.LatinTextRecognizerOptions
+import com.google.mlkit.vision.text.TextRecognizerOptions
 import kotlinx.coroutines.tasks.await
 import android.graphics.Bitmap
 
@@ -19,7 +19,7 @@ enum class OcrLang(val label: String) {
 // ponytail: satu fungsi untuk semua bahasa, tambah opsi kalau ML Kit rilis model baru.
 suspend fun recognizeText(bitmap: Bitmap, lang: OcrLang): String {
     val client = when (lang) {
-        OcrLang.LATIN -> TextRecognition.getClient(LatinTextRecognizerOptions.Builder().build())
+        OcrLang.LATIN -> TextRecognition.getClient(TextRecognizerOptions.Builder().build())
         OcrLang.CHINESE -> TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build())
         OcrLang.JAPANESE -> TextRecognition.getClient(JapaneseTextRecognizerOptions.Builder().build())
         OcrLang.KOREAN -> TextRecognition.getClient(KoreanTextRecognizerOptions.Builder().build())
