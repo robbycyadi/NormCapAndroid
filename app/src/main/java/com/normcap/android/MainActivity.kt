@@ -47,6 +47,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.core.content.getSystemService
@@ -244,9 +246,12 @@ class MainActivity : ComponentActivity() {
             return
         }
         var rect by mutableStateOf<Rect?>(null)
+        var canvasPx by mutableStateOf(IntSize.Zero)
         Text("Seret untuk pilih area, lalu jalankan OCR.")
         Canvas(
-            Modifier.fillMaxWidth().height(420.dp).pointerInput(Unit) {
+            Modifier.fillMaxWidth().height(420.dp)
+                .onSizeChanged { canvasPx = it }
+                .pointerInput(Unit) {
                 var start = Offset.Zero
                 detectDragGestures(
                     onDragStart = { start = it; rect = Rect(start, start) },
@@ -258,7 +263,7 @@ class MainActivity : ComponentActivity() {
                 )
             }
         ) {
-            drawImage(bmp.asImageBitmap())
+            drawImage(bmp.asImageBitmap(), dstSize = size)
             rect?.let {
                 drawRect(
                     color = androidx.compose.ui.graphics.Color(0xFF1A73E8),
@@ -269,15 +274,19 @@ class MainActivity : ComponentActivity() {
         }
         ActionButton("OCR area ini") {
             val r = rect
-            if (r == null) runOcr(bmp)
+            if (r == null || canvasPx.width < 1 || canvasPx.height < 1) runOcr(bmp)
             else {
-                val sx = (bmp.width / size.width.coerceAtLeast(1f))
-                // ponytail: skala kasar Canvas ke bitmap, cukup untuk crop manual.
-                val left = (r.left.coerceAtLeast(0f) * 2).toInt().coerceIn(0, bmp.width - 1)
-                val top = (r.top.coerceAtLeast(0f) * 2).toInt().coerceIn(0, bmp.height - 1)
-                val ww = (r.width * 2).toInt().coerceIn(1, bmp.width - left)
-                val hh = (r.height * 2).toInt().coerceIn(1, bmp.height - top)
-                @Suppress("UNUSED_VARIABLE") val ignoredScale = sx
+                // ponytail: gambar diskala pas ke Canvas, skala crop = bitmap / canvas.
+                val sx = bmp.width / canvasPx.width.toFloat()
+                val sy = bmp.height / canvasPx.height.toFloat()
+                val x0 = minOf(r.left, r.right).coerceIn(0f, canvasPx.width.toFloat())
+                val y0 = minOf(r.top, r.bottom).coerceIn(0f, canvasPx.height.toFloat())
+                val x1 = maxOf(r.left, r.right).coerceIn(0f, canvasPx.width.toFloat())
+                val y1 = maxOf(r.top, r.bottom).coerceIn(0f, canvasPx.height.toFloat())
+                val left = (x0 * sx).toInt().coerceIn(0, bmp.width - 1)
+                val top = (y0 * sy).toInt().coerceIn(0, bmp.height - 1)
+                val ww = ((x1 - x0) * sx).toInt().coerceIn(1, bmp.width - left)
+                val hh = ((y1 - y0) * sy).toInt().coerceIn(1, bmp.height - top)
                 runOcr(Bitmap.createBitmap(bmp, left, top, ww, hh))
             }
         }
