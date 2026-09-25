@@ -263,7 +263,7 @@ class MainActivity : ComponentActivity() {
                 )
             }
         ) {
-            drawImage(bmp.asImageBitmap(), dstSize = size)
+            drawImage(bmp.asImageBitmap(), dstSize = IntSize(size.width.toInt(), size.height.toInt()))
             rect?.let {
                 drawRect(
                     color = androidx.compose.ui.graphics.Color(0xFF1A73E8),
